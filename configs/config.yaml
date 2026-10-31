@@ -1,0 +1,53 @@
+model:
+  vlm_name: Qwen/Qwen3-VL-4B-Instruct
+  layer_id: 12            # cross-attend to hidden_states[12] (output of decoder layer 12); later layers are dropped
+  freeze_vlm: true
+  action_dim: 7           # delta eef pos (3) + delta axis-angle (3) + gripper (-1 open / 1 close)
+  state_dim: 8            # eef pos (3) + axis-angle (3) + gripper qpos (2)
+  horizon: 16             # action chunk length
+  action_head:
+    dim: 512
+    depth: 12
+    num_heads: 8
+    mlp_ratio: 4.0
+    num_inference_steps: 10
+    timestep_sampling: beta   # beta (pi0 / GR00T, emphasizes noisy t) | uniform
+
+data:
+  root: data/libero
+  suites: [libero_spatial, libero_object, libero_goal, libero_10]
+  cameras: [agentview, wrist]
+  vlm_image_size: 256     # 128px LIBERO frames are resized to 256 -> 64 Qwen3-VL tokens per image
+  crop_scale: 0.9         # random crop (train) / center crop (eval) covering 90% of the area; 1.0 disables
+  filter_noops: true
+  val_demos_per_task: 2
+  prompt: "What action should the robot take to {instruction}?"
+  batch_size: 32
+  num_workers: 12
+
+trainer:
+  device: cuda
+  checkpoint_dir: checkpoints
+  num_epochs: 5
+  lr: 1.0e-4
+  weight_decay: 1.0e-5
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  warmup_ratio: 0.03
+  min_lr_ratio: 0.1
+  grad_clip: 1.0
+  amp: true               # bf16 autocast
+  log_every: 50
+  eval_every: 2000
+  eval_max_batches: 50
+  save_every: 5000
+  wandb: true
+  wandb_project: vla-libero
+  wandb_name: qwen3vl4b-l12-dit
+
+eval:
+  execute_steps: 8        # actions of each predicted chunk executed open loop before replanning
+  num_trials: 50          # per task (the standard LIBERO protocol)
+  resolution: 128         # sim camera size, matches the training demos
+  seed: 7
+  num_videos_per_task: 2

@@ -1,0 +1,22 @@
+# torch / torchvision are installed by setup.sh (CUDA wheels)
+transformers>=5.0
+accelerate
+pyyaml
+numpy
+h5py
+wandb
+tqdm
+icecream
+huggingface_hub
+imageio
+imageio-ffmpeg
+# LIBERO simulator (LIBERO itself is installed from third_party/LIBERO by scripts/setup_libero.sh)
+robosuite==1.4.1
+mujoco==3.2.3
+bddl==1.0.1
+easydict
+future
+cloudpickle
+gym==0.25.2
+opencv-python-headless
+matplotlib

@@ -1,0 +1,20 @@
+# data, runs, logs
+data/
+checkpoints/
+wandb/
+*.pth
+*.mp4
+
+# LIBERO is cloned by scripts/setup_libero.sh
+third_party/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# editors / os
+.vscode/
+.idea/
+.DS_Store
