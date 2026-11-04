@@ -60,7 +60,7 @@ def run_episode(env, policy, instruction, init_state, max_steps, cameras, record
     return False, frames
 
 
-def evaluate_suite(policy, config, suite_name, num_trials, task_ids, out_dir, num_videos):
+def evaluate_suite(policy, config, suite_name, num_trials, task_ids, out_dir, num_videos, on_task_done=None):
     suite = lu.get_suite(suite_name)
     max_steps = lu.SUITE_MAX_STEPS[suite_name]
     cameras = config["data"]["cameras"]
@@ -83,6 +83,8 @@ def evaluate_suite(policy, config, suite_name, num_trials, task_ids, out_dir, nu
         env.close()
         results[task.language] = float(np.mean(successes))
         print(f"[{suite_name}] task {task_id} '{task.language}': {results[task.language]:.2%}", flush=True)
+        if on_task_done is not None:  # save partial results, so an interrupted run keeps the finished tasks
+            on_task_done({"success_rate": float(np.mean(list(results.values()))), "tasks": results, "complete": False})
     return {"success_rate": float(np.mean(list(results.values()))), "tasks": results}
 
 
@@ -110,12 +112,17 @@ def main():
     os.makedirs(os.path.join(out_dir, "videos"), exist_ok=True)
 
     all_results = {}
-    for suite_name in suites:
-        all_results[suite_name] = evaluate_suite(policy, config, suite_name, num_trials, args.task_ids, out_dir,
-                                                 num_videos)
-        print(f"==> {suite_name}: {all_results[suite_name]['success_rate']:.2%}", flush=True)
+
+    def save(suite_name, suite_results):
+        all_results[suite_name] = suite_results
         with open(os.path.join(out_dir, "results.json"), "w") as f:
             json.dump(all_results, f, indent=2)
+
+    for suite_name in suites:
+        suite_results = evaluate_suite(policy, config, suite_name, num_trials, args.task_ids, out_dir, num_videos,
+                                       on_task_done=lambda r: save(suite_name, r))
+        save(suite_name, {**suite_results, "complete": True})
+        print(f"==> {suite_name}: {suite_results['success_rate']:.2%}", flush=True)
     if len(suites) > 1:
         print("==> average:", f"{np.mean([r['success_rate'] for r in all_results.values()]):.2%}")
     print(f"results: {os.path.join(out_dir, 'results.json')}")
