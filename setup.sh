@@ -33,10 +33,10 @@ echo "Installing PyTorch..."
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 
 conda install -y ipykernel
-conda install -y -c conda-forge ffmpeg zstd   # zstd: unpacking the LeWM datasets
+conda install -y -c conda-forge ffmpeg zstd
 
 echo "Installing the project's Python dependencies..."
-pip install -r "$(dirname "$(readlink -f "$0")")/lewm-cus/requirements.txt"
+pip install -r "$(dirname "$(readlink -f "$0")")/requirements.txt"
 echo "Environment '${ENV_NAME}' is ready."
 
 sudo apt install -y nvtop
